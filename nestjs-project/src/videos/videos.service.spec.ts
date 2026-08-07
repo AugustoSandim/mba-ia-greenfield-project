@@ -4,6 +4,7 @@ import { Readable } from 'stream';
 import { Repository } from 'typeorm';
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/unbound-method, @typescript-eslint/require-await */
 import { ChannelsService } from '../channels/channels.service';
+import { CategoriesService } from '../categories/categories.service';
 import { ChannelNotFoundException } from '../common/exceptions/domain.exception';
 import { QueueService } from '../queue/queue.service';
 import { StorageService } from '../storage/storage.service';
@@ -11,6 +12,7 @@ import { CompleteUploadDto } from './dto/complete-upload.dto';
 import { InitiateUploadDto } from './dto/initiate-upload.dto';
 import { SignPartDto } from './dto/sign-part.dto';
 import { VideoStatus } from './entities/video-status.enum';
+import { VideoVisibility } from './entities/video-visibility.enum';
 import { Video } from './entities/video.entity';
 import {
   VideoNotFoundException,
@@ -38,11 +40,25 @@ function buildVideo(overrides: Partial<Video> = {}): Video {
     thumbnailKey: null,
     duration: null,
     failureReason: null,
+    categoryId: null,
+    visibility: VideoVisibility.UNLISTED,
+    publishedAt: null,
+    viewCount: 0,
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-01'),
     channel: null as any,
+    category: null,
     ...overrides,
   };
+}
+
+function buildPublishedReady(overrides: Partial<Video> = {}): Video {
+  return buildVideo({
+    status: VideoStatus.READY,
+    publishedAt: new Date('2024-06-01'),
+    visibility: VideoVisibility.PUBLIC,
+    ...overrides,
+  });
 }
 
 describe('VideosService', () => {
@@ -53,6 +69,7 @@ describe('VideosService', () => {
   let storageService: jest.Mocked<StorageService>;
   let queueService: jest.Mocked<QueueService>;
   let channelsService: jest.Mocked<ChannelsService>;
+  let categoriesService: jest.Mocked<CategoriesService>;
 
   beforeEach(async () => {
     videoRepository = {
@@ -83,6 +100,11 @@ describe('VideosService', () => {
         .fn()
         .mockResolvedValue({ id: CHANNEL_ID, user_id: USER_ID }),
     } as unknown as jest.Mocked<ChannelsService>;
+    categoriesService = {
+      findById: jest.fn().mockResolvedValue(null),
+      findAll: jest.fn().mockResolvedValue([]),
+      findBySlug: jest.fn().mockResolvedValue(null),
+    } as unknown as jest.Mocked<CategoriesService>;
 
     const module = await Test.createTestingModule({
       providers: [
@@ -91,6 +113,7 @@ describe('VideosService', () => {
         { provide: StorageService, useValue: storageService },
         { provide: QueueService, useValue: queueService },
         { provide: ChannelsService, useValue: channelsService },
+        { provide: CategoriesService, useValue: categoriesService },
       ],
     }).compile();
 
@@ -322,9 +345,7 @@ describe('VideosService', () => {
     it('sets headers and pipes body for full stream (no Range)', async () => {
       const fakeBody = new Readable({ read() {} });
       fakeBody.push(null);
-      videoRepository.findOne.mockResolvedValue(
-        buildVideo({ status: VideoStatus.READY }),
-      );
+      videoRepository.findOne.mockResolvedValue(buildPublishedReady());
       storageService.getObjectStream.mockResolvedValue({
         body: fakeBody,
         contentLength: 100,
@@ -346,9 +367,7 @@ describe('VideosService', () => {
     it('sets 206 status and Content-Range header when Range present and contentRange returned', async () => {
       const fakeBody = new Readable({ read() {} });
       fakeBody.push(null);
-      videoRepository.findOne.mockResolvedValue(
-        buildVideo({ status: VideoStatus.READY }),
-      );
+      videoRepository.findOne.mockResolvedValue(buildPublishedReady());
       storageService.getObjectStream.mockResolvedValue({
         body: fakeBody,
         contentLength: 100,
@@ -371,9 +390,7 @@ describe('VideosService', () => {
     it('forwards Range header to storageService.getObjectStream', async () => {
       const fakeBody = new Readable({ read() {} });
       fakeBody.push(null);
-      videoRepository.findOne.mockResolvedValue(
-        buildVideo({ status: VideoStatus.READY }),
-      );
+      videoRepository.findOne.mockResolvedValue(buildPublishedReady());
       storageService.getObjectStream.mockResolvedValue({
         body: fakeBody,
         contentLength: 50,
@@ -395,8 +412,7 @@ describe('VideosService', () => {
 
   describe('getVideoMetadata', () => {
     it('returns VideoResponseDto for READY video without auth', async () => {
-      const video = buildVideo({
-        status: VideoStatus.READY,
+      const video = buildPublishedReady({
         duration: 30.5,
         thumbnailKey: null,
       });
@@ -465,7 +481,7 @@ describe('VideosService', () => {
 
     it('returns thumbnailUrl as null when thumbnailKey is null', async () => {
       videoRepository.findOne.mockResolvedValue(
-        buildVideo({ status: VideoStatus.READY, thumbnailKey: null }),
+        buildPublishedReady({ thumbnailKey: null }),
       );
 
       const dto = await service.getVideoMetadata(PUBLIC_ID, undefined);
@@ -476,8 +492,7 @@ describe('VideosService', () => {
 
     it('returns thumbnailUrl as string when thumbnailKey is set', async () => {
       videoRepository.findOne.mockResolvedValue(
-        buildVideo({
-          status: VideoStatus.READY,
+        buildPublishedReady({
           thumbnailKey: `videos/${VIDEO_ID}/thumbnail.jpg`,
         }),
       );

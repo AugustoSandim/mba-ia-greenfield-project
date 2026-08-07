@@ -4,6 +4,7 @@ import { ConfigModule, ConfigType } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RefreshToken } from '../auth/entities/refresh-token.entity';
 import { VerificationToken } from '../auth/entities/verification-token.entity';
+import { Category } from '../categories/entities/category.entity';
 import { Channel } from '../channels/entities/channel.entity';
 import queueConfig from '../config/queue.config';
 import storageConfig from '../config/storage.config';
@@ -12,7 +13,14 @@ import { User } from '../users/entities/user.entity';
 import { Video } from './entities/video.entity';
 import { VideosModule } from './videos.module';
 
-const ALL_ENTITIES = [User, Channel, RefreshToken, VerificationToken, Video];
+const ALL_ENTITIES = [
+  User,
+  Channel,
+  RefreshToken,
+  VerificationToken,
+  Category,
+  Video,
+];
 
 describe('VideosModule', () => {
   it('should compile successfully', async () => {

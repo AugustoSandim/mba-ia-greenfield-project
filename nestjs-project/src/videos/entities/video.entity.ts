@@ -8,7 +8,9 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Channel } from '../../channels/entities/channel.entity';
+import { Category } from '../../categories/entities/category.entity';
 import { VideoStatus } from './video-status.enum';
+import { VideoVisibility } from './video-visibility.enum';
 
 @Entity('videos')
 export class Video {
@@ -50,6 +52,23 @@ export class Video {
   @Column({ name: 'failure_reason', type: 'text', nullable: true })
   failureReason: string | null;
 
+  @Column({ name: 'category_id', type: 'uuid', nullable: true })
+  categoryId: string | null;
+
+  @Column({
+    type: 'enum',
+    enum: VideoVisibility,
+    enumName: 'video_visibility_enum',
+    default: VideoVisibility.UNLISTED,
+  })
+  visibility: VideoVisibility;
+
+  @Column({ name: 'published_at', type: 'timestamp', nullable: true })
+  publishedAt: Date | null;
+
+  @Column({ name: 'view_count', type: 'int', default: 0 })
+  viewCount: number;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
@@ -59,4 +78,8 @@ export class Video {
   @ManyToOne(() => Channel, { onDelete: 'CASCADE', eager: false })
   @JoinColumn({ name: 'channel_id' })
   channel: Channel;
+
+  @ManyToOne(() => Category, { onDelete: 'SET NULL', eager: false })
+  @JoinColumn({ name: 'category_id' })
+  category: Category | null;
 }

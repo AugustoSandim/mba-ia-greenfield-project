@@ -8,7 +8,9 @@ import {
   HttpStatus,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
+  Query,
   Res,
 } from '@nestjs/common';
 import {
@@ -24,6 +26,9 @@ import { Public } from '../auth/decorators/public.decorator';
 import { CompleteUploadDto } from './dto/complete-upload.dto';
 import { InitiateUploadDto } from './dto/initiate-upload.dto';
 import { SignPartDto } from './dto/sign-part.dto';
+import { ThumbnailPresignDto } from './dto/thumbnail-presign.dto';
+import { UpdateVideoDto } from './dto/update-video.dto';
+import { VideoFeedQueryDto } from './dto/video-feed-query.dto';
 import { VideoResponseDto } from './dto/video-response.dto';
 import { VideosService } from './videos.service';
 
@@ -84,6 +89,75 @@ export class VideosController {
     @Param('videoId', ParseUUIDPipe) videoId: string,
   ): Promise<void> {
     await this.videosService.abortUpload(videoId, user.sub);
+  }
+
+  @Public()
+  @Get('videos')
+  @ApiOperation({
+    summary: 'Public video feed with search and category filter',
+  })
+  listFeed(@Query() query: VideoFeedQueryDto) {
+    return this.videosService.listFeed(query);
+  }
+
+  @Patch('videos/:videoId')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update video metadata (owner, ready only)' })
+  updateVideo(
+    @CurrentUser() user: JwtPayload,
+    @Param('videoId', ParseUUIDPipe) videoId: string,
+    @Body() dto: UpdateVideoDto,
+  ) {
+    return this.videosService.updateVideo(videoId, user.sub, dto);
+  }
+
+  @Post('videos/:videoId/publish')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Publish a ready video' })
+  publish(
+    @CurrentUser() user: JwtPayload,
+    @Param('videoId', ParseUUIDPipe) videoId: string,
+  ) {
+    return this.videosService.publishVideo(videoId, user.sub);
+  }
+
+  @Post('videos/:videoId/unpublish')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Unpublish a video' })
+  unpublish(
+    @CurrentUser() user: JwtPayload,
+    @Param('videoId', ParseUUIDPipe) videoId: string,
+  ) {
+    return this.videosService.unpublishVideo(videoId, user.sub);
+  }
+
+  @Post('videos/:videoId/thumbnail/presign')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get presigned URL for custom thumbnail upload' })
+  presignThumbnail(
+    @CurrentUser() user: JwtPayload,
+    @Param('videoId', ParseUUIDPipe) videoId: string,
+    @Body() dto: ThumbnailPresignDto,
+  ) {
+    return this.videosService.presignThumbnail(videoId, user.sub, dto);
+  }
+
+  @Public()
+  @Post('videos/:publicId/views')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Increment video view count' })
+  recordView(@Param('publicId') publicId: string) {
+    return this.videosService.incrementViewCount(publicId);
+  }
+
+  @Public()
+  @Get('videos/:publicId/related')
+  @ApiOperation({ summary: 'Related videos by category' })
+  listRelated(@Param('publicId') publicId: string) {
+    return this.videosService.listRelated(publicId);
   }
 
   @Public()

@@ -52,6 +52,9 @@ export type LoginTokenPair =
 export type RefreshTokenPair =
   paths["/auth/refresh"]["post"]["responses"][200]["content"]["application/json"];
 
+export type CurrentUserProfile =
+  paths["/auth/me"]["get"]["responses"][200]["content"]["application/json"];
+
 // Shared error envelope (all auth 4xx responses)
 export type ApiErrorEnvelope =
   paths["/auth/register"]["post"]["responses"][400]["content"]["application/json"];

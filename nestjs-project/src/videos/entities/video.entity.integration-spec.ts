@@ -1,6 +1,7 @@
 import { DataSource, Repository } from 'typeorm';
 import { RefreshToken } from '../../auth/entities/refresh-token.entity';
 import { VerificationToken } from '../../auth/entities/verification-token.entity';
+import { Category } from '../../categories/entities/category.entity';
 import { Channel } from '../../channels/entities/channel.entity';
 import {
   cleanAllTables,
@@ -10,7 +11,14 @@ import { User } from '../../users/entities/user.entity';
 import { VideoStatus } from './video-status.enum';
 import { Video } from './video.entity';
 
-const ALL_ENTITIES = [User, Channel, RefreshToken, VerificationToken, Video];
+const ALL_ENTITIES = [
+  User,
+  Channel,
+  RefreshToken,
+  VerificationToken,
+  Category,
+  Video,
+];
 
 describe('Video entity (integration)', () => {
   let dataSource: DataSource;

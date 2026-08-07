@@ -42,7 +42,11 @@ Services:
 ## Videos / Storage / Queue
 
 - **Upload:** `POST /videos/uploads` → draft + multipart; `POST .../parts` → presigned PUT; `POST .../complete` → enqueue; `DELETE ...` → abort.
-- **Public playback:** `GET /videos/:publicId` (metadata), `/stream` (Range/206), `/download`.
+- **Publication:** `PATCH /videos/:id`, `POST .../publish|unpublish`, thumbnail presign; feed `GET /videos?category&q&page`.
+- **Public playback:** `GET /videos/:publicId` (metadata), `/stream` (Range/206), `/download`, `/related`, `POST .../views`.
+- **Channels:** `GET/PATCH /channels/me`, `GET /channels/:nickname`, subscribe/unsubscribe.
+- **Social:** `GET/POST /videos/:publicId/comments`, likes on videos/comments, `GET /channels/me/subscriptions`.
+- **Categories:** `GET /categories`.
 - **Worker:** `src/main.worker.ts` via Compose service `video-worker`; probes duration and writes `thumbnail.jpg`.
 - Env namespaces: `storage.config.ts`, `queue.config.ts` (`REDIS_HOST=redis`, `S3_ENDPOINT=http://minio:9000`).
 

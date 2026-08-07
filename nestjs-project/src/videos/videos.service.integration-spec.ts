@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Queue } from 'bullmq';
 import { randomUUID } from 'crypto';
 import { DataSource } from 'typeorm';
+import { Category } from '../categories/entities/category.entity';
 import { Channel } from '../channels/entities/channel.entity';
 import { ChannelsModule } from '../channels/channels.module';
 import queueConfig from '../config/queue.config';
@@ -23,7 +24,7 @@ import { Video } from './entities/video.entity';
 import { VideosModule } from './videos.module';
 import { VideosService } from './videos.service';
 
-const ALL_ENTITIES = [User, Channel, Video];
+const ALL_ENTITIES = [User, Channel, Category, Video];
 
 async function createUserAndChannel(
   dataSource: DataSource,

@@ -5,7 +5,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { CategoriesModule } from './categories/categories.module';
+import { ChannelsModule } from './channels/channels.module';
+import { CommentsModule } from './comments/comments.module';
+import { LikesModule } from './likes/likes.module';
 import { QueueModule } from './queue/queue.module';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { VideosModule } from './videos/videos.module';
 import appConfig from './config/app.config';
 import authConfig from './config/auth.config';
@@ -56,7 +61,12 @@ import { envValidationSchema } from './config/env.validation';
       }),
     }),
     AuthModule,
+    CategoriesModule,
+    ChannelsModule,
+    CommentsModule,
+    LikesModule,
     QueueModule,
+    SubscriptionsModule,
     VideosModule,
   ],
   controllers: [AppController],

@@ -1,8 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, QueryFailedError } from 'typeorm';
+import { DataSource, IsNull, Not, QueryFailedError } from 'typeorm';
 import { ChannelNotFoundException } from '../common/exceptions/domain.exception';
-import { appendRandomSuffix, sanitizeNickname } from './nickname.util';
+import { Subscription } from '../subscriptions/entities/subscription.entity';
+import { Video } from '../videos/entities/video.entity';
+import { VideoStatus } from '../videos/entities/video-status.enum';
+import { VideoVisibility } from '../videos/entities/video-visibility.enum';
+import { UpdateChannelDto } from './dto/update-channel.dto';
 import { Channel } from './entities/channel.entity';
+import {
+  ChannelByNicknameNotFoundException,
+  ChannelNicknameTakenException,
+} from './exceptions/channel.exceptions';
+import { appendRandomSuffix, sanitizeNickname } from './nickname.util';
 
 const PG_UNIQUE_VIOLATION = '23505';
 const NICKNAME_COLUMN = 'nickname';
@@ -68,5 +77,94 @@ export class ChannelsService {
         'Nickname conflict could not be resolved after max retries',
       );
     });
+  }
+
+  async findByNickname(nickname: string): Promise<Channel> {
+    const channel = await this.dataSource.getRepository(Channel).findOne({
+      where: { nickname },
+    });
+    if (!channel) {
+      throw new ChannelByNicknameNotFoundException();
+    }
+    return channel;
+  }
+
+  async updateChannel(userId: string, dto: UpdateChannelDto): Promise<Channel> {
+    const repo = this.dataSource.getRepository(Channel);
+    const channel = await this.findChannelByUserId(userId);
+
+    if (dto.nickname !== undefined) {
+      const nickname = sanitizeNickname(dto.nickname);
+      const taken = await repo.findOne({ where: { nickname } });
+      if (taken && taken.id !== channel.id) {
+        throw new ChannelNicknameTakenException();
+      }
+      channel.nickname = nickname;
+    }
+    if (dto.name !== undefined) {
+      channel.name = dto.name;
+    }
+    if (dto.description !== undefined) {
+      channel.description = dto.description;
+    }
+
+    try {
+      return await repo.save(channel);
+    } catch (err) {
+      if (isPgUniqueViolationOnColumn(err, NICKNAME_COLUMN)) {
+        throw new ChannelNicknameTakenException();
+      }
+      throw err;
+    }
+  }
+
+  async getSubscriberCount(channelId: string): Promise<number> {
+    return this.dataSource.getRepository(Subscription).count({
+      where: { channelId },
+    });
+  }
+
+  async listPublicVideos(
+    channelId: string,
+    page: number,
+    limit: number,
+  ): Promise<{ items: Video[]; total: number }> {
+    const repo = this.dataSource.getRepository(Video);
+    const [items, total] = await repo.findAndCount({
+      where: {
+        channelId,
+        status: VideoStatus.READY,
+        visibility: VideoVisibility.PUBLIC,
+        publishedAt: Not(IsNull()),
+      },
+      order: { publishedAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+    return { items, total };
+  }
+
+  async listOwnerVideos(
+    channelId: string,
+    page: number,
+    limit: number,
+  ): Promise<{ items: Video[]; total: number }> {
+    const repo = this.dataSource.getRepository(Video);
+    const [items, total] = await repo.findAndCount({
+      where: { channelId },
+      order: { createdAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+    return { items, total };
+  }
+
+  async listSubscriptions(userId: string): Promise<Channel[]> {
+    const subs = await this.dataSource.getRepository(Subscription).find({
+      where: { subscriberId: userId },
+      relations: ['channel'],
+      order: { createdAt: 'DESC' },
+    });
+    return subs.map((s) => s.channel);
   }
 }

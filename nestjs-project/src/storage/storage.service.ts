@@ -192,6 +192,22 @@ export class StorageService {
     );
   }
 
+  async getPresignedPutUrl(
+    key: string,
+    contentType: string,
+    expiresIn = 3600,
+  ): Promise<string> {
+    return getSignedUrl(
+      this.client,
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        ContentType: contentType,
+      }),
+      { expiresIn },
+    );
+  }
+
   async deleteObject(key: string): Promise<void> {
     await this.client.send(
       new DeleteObjectCommand({

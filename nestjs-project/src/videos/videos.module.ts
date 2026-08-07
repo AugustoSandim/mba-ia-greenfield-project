@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CategoriesModule } from '../categories/categories.module';
 import { ChannelsModule } from '../channels/channels.module';
 import { QueueModule } from '../queue/queue.module';
 import { StorageModule } from '../storage/storage.module';
@@ -13,6 +14,7 @@ import { VideosService } from './videos.service';
     StorageModule,
     QueueModule,
     ChannelsModule,
+    CategoriesModule,
   ],
   controllers: [VideosController],
   providers: [VideosService],

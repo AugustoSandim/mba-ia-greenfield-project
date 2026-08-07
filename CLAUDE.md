@@ -12,7 +12,7 @@ This is a monorepo with two main areas:
 
 - `nestjs-project/` — Backend API (NestJS 11, TypeScript, Express). Contains modules for users, channels, videos, comments, etc.
 - `docs/` — Project documentation, architecture diagrams, and planning.
-- `next-frontend/` (Next.js) — not yet initialized
+- `next-frontend/` (Next.js 16) — BFF under `app/api/**`, home/watch/studio/social UI
 
 ## Architecture (C4 Container Diagram)
 
@@ -40,7 +40,22 @@ Upload uses **presigned S3 multipart** (MinIO). The API never proxies file bytes
 
 Object keys: `videos/{uuid}/original`, `videos/{uuid}/thumbnail.jpg`. Public ids: nanoid length 21 (`nanoid@3` for Jest CJS).
 
-Host ports (local): Postgres `5433→5432`, Redis `6379`, MinIO `9000/9001`, API `3000`.
+Host ports (local): Postgres `5433→5432`, Redis `6379`, MinIO `9000/9001`, API `3000`, Frontend `3001`.
+
+## Phases 04–07 — Publishing, Watch, Social, Home
+
+**Publication** is separate from processing: `publishedAt` null = draft; must be `READY` to publish. **Visibility:** `public` (listings) vs `unlisted` (direct link only).
+
+| Area | Location |
+|------|----------|
+| Categories | `nestjs-project/src/categories/` — `GET /categories` |
+| Channel API | `nestjs-project/src/channels/channels.controller.ts` — `me`, public page, subscriptions |
+| Videos (extended) | publish/unpublish, edit, feed `GET /videos`, views, related |
+| Comments | `nestjs-project/src/comments/` — nested replies (2 levels) |
+| Likes | `nestjs-project/src/likes/` — video + comment likes |
+| Subscriptions | `nestjs-project/src/subscriptions/` |
+| Frontend BFF | `next-frontend/app/api/**` — studio, watch, channels, videos |
+| Frontend UI | home `/`, watch `/watch/[publicId]`, channel `/c/[nickname]`, studio `/studio/**` |
 
 ## Docker Networking
 

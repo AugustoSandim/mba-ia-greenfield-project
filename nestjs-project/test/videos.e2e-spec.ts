@@ -11,6 +11,7 @@ import { DomainExceptionFilter } from '../src/common/filters/domain-exception.fi
 import { ValidationExceptionFilter } from '../src/common/filters/validation-exception.filter';
 import { StorageService } from '../src/storage/storage.service';
 import { VideoStatus } from '../src/videos/entities/video-status.enum';
+import { VideoVisibility } from '../src/videos/entities/video-visibility.enum';
 import { Video } from '../src/videos/entities/video.entity';
 import { cleanAllTables } from '../src/test/create-test-data-source';
 import { ThrottlerStorage, ThrottlerStorageService } from '@nestjs/throttler';
@@ -71,6 +72,8 @@ async function createReadyVideo(
     storageKey,
     uploadId: null,
     status: VideoStatus.READY,
+    visibility: VideoVisibility.PUBLIC,
+    publishedAt: new Date(),
     duration: 10,
     thumbnailKey: null,
     title: null,

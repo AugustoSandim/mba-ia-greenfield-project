@@ -26,6 +26,18 @@ export function createTestDataSource(
 export async function cleanAllTables(dataSource: DataSource): Promise<void> {
   await dataSource.query(`
     DO $do$ BEGIN
+      IF to_regclass('public.comment_likes') IS NOT NULL THEN
+        DELETE FROM "comment_likes";
+      END IF;
+      IF to_regclass('public.video_likes') IS NOT NULL THEN
+        DELETE FROM "video_likes";
+      END IF;
+      IF to_regclass('public.subscriptions') IS NOT NULL THEN
+        DELETE FROM "subscriptions";
+      END IF;
+      IF to_regclass('public.comments') IS NOT NULL THEN
+        DELETE FROM "comments";
+      END IF;
       IF to_regclass('public.videos') IS NOT NULL THEN
         DELETE FROM "videos";
       END IF;
