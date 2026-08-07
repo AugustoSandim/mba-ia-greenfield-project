@@ -39,6 +39,12 @@ export class TokenExpiredException extends DomainException {
   }
 }
 
+export class ChannelNotFoundException extends DomainException {
+  constructor() {
+    super('CHANNEL_NOT_FOUND', 403, 'Channel not found for this user');
+  }
+}
+
 export class TokenReuseDetectedException extends DomainException {
   constructor() {
     super(

@@ -128,4 +128,15 @@ describe('exportSpec (integration)', () => {
       }
     }
   });
+
+  it('includes video upload, metadata, stream, and download paths', () => {
+    const paths = document.paths as Record<string, unknown>;
+    expect(paths['/videos/uploads']).toBeDefined();
+    expect(paths['/videos/uploads/{videoId}/parts']).toBeDefined();
+    expect(paths['/videos/uploads/{videoId}/complete']).toBeDefined();
+    expect(paths['/videos/uploads/{videoId}']).toBeDefined();
+    expect(paths['/videos/{publicId}']).toBeDefined();
+    expect(paths['/videos/{publicId}/stream']).toBeDefined();
+    expect(paths['/videos/{publicId}/download']).toBeDefined();
+  });
 });

@@ -23,8 +23,24 @@ See `docs/diagrams/software-arch.mermaid` for the full diagram. Key containers:
 - **Video Worker** (FFmpeg) → consumes jobs from queue, processes videos, updates DB and storage
 - **Database** (PostgreSQL) → users, channels, videos, comments, likes
 - **Object Storage** (S3/MinIO) → video files and thumbnails
-- **Message Queue** (TBD) → video processing job queue
+- **Message Queue** (Redis + BullMQ) → video processing job queue (`video-processing`)
 - **Email Service** (SMTP) → account confirmation and password recovery
+
+## Phase 03 — Videos (backend)
+
+Upload uses **presigned S3 multipart** (MinIO). The API never proxies file bytes. Status flow: `draft → queued → processing → ready|failed`.
+
+| Area | Location |
+|------|----------|
+| Storage (AWS SDK v3) | `nestjs-project/src/storage/` |
+| Queue (BullMQ) | `nestjs-project/src/queue/` |
+| Videos API | `nestjs-project/src/videos/` |
+| Worker (FFmpeg) | `nestjs-project/src/video-worker/`, entry `main.worker.ts` |
+| Compose | `redis`, `minio`, `minio-init`, `video-worker` in `nestjs-project/compose.yaml` |
+
+Object keys: `videos/{uuid}/original`, `videos/{uuid}/thumbnail.jpg`. Public ids: nanoid length 21 (`nanoid@3` for Jest CJS).
+
+Host ports (local): Postgres `5433→5432`, Redis `6379`, MinIO `9000/9001`, API `3000`.
 
 ## Docker Networking
 

@@ -24,6 +24,13 @@ export function createTestDataSource(
 }
 
 export async function cleanAllTables(dataSource: DataSource): Promise<void> {
+  await dataSource.query(`
+    DO $do$ BEGIN
+      IF to_regclass('public.videos') IS NOT NULL THEN
+        DELETE FROM "videos";
+      END IF;
+    END $do$;
+  `);
   await dataSource.query('DELETE FROM "refresh_tokens"');
   await dataSource.query('DELETE FROM "verification_tokens"');
   await dataSource.query('DELETE FROM "channels"');

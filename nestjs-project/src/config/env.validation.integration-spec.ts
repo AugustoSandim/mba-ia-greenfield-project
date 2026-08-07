@@ -6,6 +6,9 @@ const requiredEnv = {
   DB_NAME: 'db',
   JWT_SECRET: 'secret',
   JWT_REFRESH_SECRET: 'refresh-secret',
+  STORAGE_ENDPOINT: 'minio',
+  STORAGE_ACCESS_KEY: 'minioadmin',
+  STORAGE_SECRET_KEY: 'minioadmin',
 };
 
 const validate = (env: Record<string, string>) =>

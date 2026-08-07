@@ -33,7 +33,18 @@ docker compose exec nestjs-api npm run start:dev
 
 Services:
 - `nestjs-api` — NestJS API, port `3000`
-- `db` — PostgreSQL 17, port `5432`, database `streamtube`, user/password `streamtube`
+- `video-worker` — BullMQ consumer + FFmpeg (`Dockerfile.worker`)
+- `db` — PostgreSQL 17, host port `5433` → container `5432`, database `streamtube`, user/password `streamtube`
+- `redis` — BullMQ broker, port `6379`
+- `minio` / `minio-init` — S3-compatible object storage (`streamtube` bucket), ports `9000`/`9001`
+- `mailpit` — SMTP catcher, ports `1025` (SMTP) / `8025` (UI)
+
+## Videos / Storage / Queue
+
+- **Upload:** `POST /videos/uploads` → draft + multipart; `POST .../parts` → presigned PUT; `POST .../complete` → enqueue; `DELETE ...` → abort.
+- **Public playback:** `GET /videos/:publicId` (metadata), `/stream` (Range/206), `/download`.
+- **Worker:** `src/main.worker.ts` via Compose service `video-worker`; probes duration and writes `thumbnail.jpg`.
+- Env namespaces: `storage.config.ts`, `queue.config.ts` (`REDIS_HOST=redis`, `S3_ENDPOINT=http://minio:9000`).
 
 All verification and teardown commands run on the **host machine**:
 

@@ -1,0 +1,14 @@
+FROM node:25.6.0-slim
+
+USER root
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ffmpeg procps curl \
+  && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /home/node/app
+
+USER node
+
+# SI-03.6 replaces the keep-alive command with `node dist/main.worker.js`
+CMD ["tail", "-f", "/dev/null"]
