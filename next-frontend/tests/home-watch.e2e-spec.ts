@@ -6,13 +6,17 @@ test.describe("home-watch", () => {
 
     await expect(page.getByRole("heading", { name: "Discover videos" })).toBeVisible();
     await expect(page.getByLabel("Search videos")).toBeVisible();
-    await expect(page.getByRole("link", { name: /Building a StreamTube upload pipeline/i })).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Building a StreamTube upload pipeline", exact: true })
+    ).toBeVisible();
 
-    await page.getByRole("link", { name: /Building a StreamTube upload pipeline/i }).click();
+    await page
+      .getByRole("link", { name: "Building a StreamTube upload pipeline", exact: true })
+      .click();
 
     await expect(page).toHaveURL(/\/watch\/streamtube-home-1$/);
     await expect(page.getByRole("heading", { name: /Building a StreamTube upload pipeline/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /Like/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Like ·/ })).toBeVisible();
     await expect(page.locator("video")).toBeVisible();
   });
 
@@ -24,6 +28,6 @@ test.describe("home-watch", () => {
 
     await expect(page).toHaveURL(/\/search\?q=lofi$/);
     await expect(page.getByRole("heading", { name: "Search results" })).toBeVisible();
-    await expect(page.getByRole("link", { name: /Lofi coding session/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Lofi coding session", exact: true })).toBeVisible();
   });
 });
