@@ -1,4 +1,9 @@
-import { DataSource, EntitySchema, MigrationInterface } from 'typeorm';
+import {
+  DataSource,
+  EntitySchema,
+  type EntityTarget,
+  MigrationInterface,
+} from 'typeorm';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule, ConfigType } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -44,14 +49,13 @@ export function createSocialModuleSpecImports() {
   ];
 }
 
-
 interface TestDataSourceOptions {
   synchronize?: boolean;
   migrations?: (new () => MigrationInterface)[];
 }
 
 export function createTestDataSource(
-  entities: (Function | string | EntitySchema<any>)[],
+  entities: (EntityTarget<object> | EntitySchema)[],
   options: TestDataSourceOptions = {},
 ): DataSource {
   const { synchronize = true, migrations } = options;

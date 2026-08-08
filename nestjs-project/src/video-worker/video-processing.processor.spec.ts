@@ -36,7 +36,7 @@ jest.mock('fluent-ffmpeg', () => {
     };
     return api;
   });
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
   (ffmpegFn as any).ffprobe = ffprobe;
   return { __esModule: true, default: ffmpegFn };
 });

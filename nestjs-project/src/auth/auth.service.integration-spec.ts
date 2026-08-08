@@ -23,8 +23,6 @@ import { UsersModule } from '../users/users.module';
 import {
   cleanAllTables,
   createSocialModuleSpecImports,
-  createTestDataSource,
-  FULL_APP_ENTITIES,
 } from '../test/create-test-data-source';
 import { clearMailpitMessages } from '../test/mailpit';
 import { AuthService } from './auth.service';
@@ -33,8 +31,6 @@ import {
   VerificationToken,
   VerificationTokenType,
 } from './entities/verification-token.entity';
-
-const ALL_ENTITIES = FULL_APP_ENTITIES;
 
 async function createAuthTestModule(): Promise<TestingModule> {
   return Test.createTestingModule({
@@ -232,7 +228,7 @@ describe('AuthService — confirm (integration)', () => {
 
   it('throws TokenExpiredException for an expired token', async () => {
     const capturePromise = captureConfirmationToken(authService);
-    const { id: userId } = await authService.register({
+    await authService.register({
       email: 'expired@example.com',
       password: 'password123',
     });

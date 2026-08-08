@@ -135,7 +135,9 @@ export class VideosService {
     videos: Video[],
     userId?: string,
   ): Promise<VideoResponseDto[]> {
-    return Promise.all(videos.map((video) => this.toResponseDto(video, userId)));
+    return Promise.all(
+      videos.map((video) => this.toResponseDto(video, userId)),
+    );
   }
 
   private async generateUniquePublicId(maxRetries = 5): Promise<string> {

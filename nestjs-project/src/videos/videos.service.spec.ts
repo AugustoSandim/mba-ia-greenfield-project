@@ -2,7 +2,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Test } from '@nestjs/testing';
 import { Readable } from 'stream';
 import { Repository } from 'typeorm';
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/unbound-method, @typescript-eslint/require-await */
+
 import { ChannelsService } from '../channels/channels.service';
 import { CategoriesService } from '../categories/categories.service';
 import { CommentsService } from '../comments/comments.service';
@@ -110,7 +110,9 @@ describe('VideosService', () => {
       findBySlug: jest.fn().mockResolvedValue(null),
     } as unknown as jest.Mocked<CategoriesService>;
     likesService = {
-      getVideoLikeCounts: jest.fn().mockResolvedValue({ likes: 0, dislikes: 0 }),
+      getVideoLikeCounts: jest
+        .fn()
+        .mockResolvedValue({ likes: 0, dislikes: 0 }),
       getUserVideoReaction: jest.fn().mockResolvedValue('none'),
     } as unknown as jest.Mocked<LikesService>;
     commentsService = {
