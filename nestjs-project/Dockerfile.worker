@@ -10,5 +10,4 @@ WORKDIR /home/node/app
 
 USER node
 
-# SI-03.6 replaces the keep-alive command with `node dist/main.worker.js`
 CMD ["tail", "-f", "/dev/null"]

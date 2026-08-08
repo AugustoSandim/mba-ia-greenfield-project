@@ -182,6 +182,9 @@ npx playwright test tests/foo.e2e-spec.ts
 Playwright runs on the **host** and targets the **containerized** dev server. Before running any `*.e2e-spec.ts`, the dev server must be running inside the container with `MSW_ENABLED=true`. Follow these steps in order:
 
 ```bash
+# 0. Install Playwright browsers on the host (first time only; TLS bypass for corporate proxies)
+NODE_TLS_REJECT_UNAUTHORIZED=0 npx playwright install chromium
+
 # 1. Ensure the container is up (idempotent)
 docker compose up -d
 
@@ -191,8 +194,9 @@ docker compose exec -d next-frontend sh -c "MSW_ENABLED=true npm run dev"
 # 3. Wait until the server is ready (retries up to ~30 s)
 curl --retry 15 --retry-delay 2 --retry-connrefused -I http://localhost:3001
 
-# 4. Run the E2E suite on the host
-npx playwright test
+# 4. Run the E2E suite on the host (from next-frontend/, or repo root with root playwright.config.ts)
+cd next-frontend && npx playwright test
+# Monorepo root: npx playwright test --config playwright.config.ts
 
 # Or a single spec
 npx playwright test tests/xxxx.e2e-spec.ts

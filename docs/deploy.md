@@ -1,59 +1,59 @@
 # Deploy — StreamTube
 
-Guia mínimo para subir o projeto em ambiente de produção ou homologação.
+Guia para subir o projeto em ambiente local integrado ou produção.
+
+## Compose files
+
+| Arquivo | Uso |
+|---------|-----|
+| `nestjs-project/compose.yaml` | Backend isolado (dev) |
+| `next-frontend/compose.yaml` | Frontend isolado com MSW (dev/E2E) |
+| `compose.full.yaml` | Stack completa local — frontend → API real |
+| `compose.prod.yaml` | Imagens de produção (sem bind mounts) |
 
 ## Pré-requisitos
 
 - Docker e Docker Compose
-- Variáveis de ambiente configuradas (ver `.env.example` em cada subprojeto)
+- Variáveis de ambiente configuradas (`nestjs-project/.env` a partir de `.env.example`)
 - Migrations aplicadas no banco (`npm run migration:run` no container da API)
-
-## Serviços necessários
-
-| Serviço | Função |
-|---------|--------|
-| PostgreSQL | Dados da aplicação |
-| Redis | Fila BullMQ (`video-processing`) |
-| MinIO ou S3 | Vídeos e thumbnails |
-| SMTP | E-mails transacionais |
-| NestJS API | Backend REST |
-| Video Worker | FFmpeg + consumo da fila |
-| Next.js | Frontend + BFF |
 
 ## Rede Docker
 
-Em produção, use **nomes de serviço Compose** como hosts:
+Em produção e no `compose.full.yaml`, use **nomes de serviço Compose** como hosts:
 
-- API → `DB_HOST=db`, `REDIS_HOST=redis`, `S3_ENDPOINT=http://minio:9000`
+- API → `DB_HOST=db`, `REDIS_HOST=redis`, `STORAGE_ENDPOINT=minio`
 - Frontend → `API_URL=http://nestjs-api:3000`
 
 Nunca use `localhost` para comunicação entre containers.
 
+## Desenvolvimento integrado (API real)
+
+```bash
+cp nestjs-project/.env.example nestjs-project/.env   # se ainda não existir
+bash scripts/smoke-full-stack.sh
+```
+
+Frontend: http://localhost:3001 · API: http://localhost:3000 · Mailpit: http://localhost:8025
+
+## E2E (MSW, sem API real)
+
+```bash
+bash scripts/run-e2e.sh
+```
+
 ## Build de produção
 
-### Backend
-
 ```bash
-cd nestjs-project
-docker compose exec nestjs-api npm run build
-docker compose exec nestjs-api node dist/main.js
+docker compose -f compose.prod.yaml build
+docker compose -f compose.prod.yaml up -d
+docker compose -f compose.prod.yaml exec nestjs-api npm run migration:run
 ```
 
-Worker:
+### Imagens individuais
 
-```bash
-docker compose exec video-worker node dist/main.worker.js
-```
-
-### Frontend
-
-```bash
-cd next-frontend
-docker compose exec next-frontend npm run build
-docker compose exec next-frontend npm run start
-```
-
-A aplicação escuta na porta `3000` dentro do container (mapeie para `3001` no host em dev).
+- `nestjs-project/Dockerfile` — API (`node dist/main.js`)
+- `nestjs-project/Dockerfile.worker` — worker FFmpeg (`node dist/main.worker.js`)
+- `next-frontend/Dockerfile` — Next.js standalone (`output: 'standalone'`)
 
 ## OpenAPI
 

@@ -1,0 +1,109 @@
+# Production-oriented stack (built images, no bind mounts).
+name: streamtube-prod
+
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: streamtube
+      POSTGRES_PASSWORD: streamtube
+      POSTGRES_DB: streamtube
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U streamtube"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  minio-init:
+    image: minio/mc
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 minioadmin minioadmin &&
+      mc mb --ignore-existing local/streamtube &&
+      exit 0
+      "
+
+  mailpit:
+    image: axllent/mailpit
+
+  nestjs-api:
+    build:
+      context: ./nestjs-project
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./nestjs-project/.env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+
+  video-worker:
+    build:
+      context: ./nestjs-project
+      dockerfile: Dockerfile.worker.prod
+    env_file:
+      - ./nestjs-project/.env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    command: ["node", "dist/main.worker.js"]
+
+  next-frontend:
+    build:
+      context: ./next-frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3000"
+    environment:
+      API_URL: http://nestjs-api:3000
+      SESSION_PASSWORD: streamtube-session-password-123456789012
+      NODE_ENV: production
+    depends_on:
+      - nestjs-api
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:

@@ -35,11 +35,21 @@
 |-------|-----------|
 | Backend unit/integration | 191/191 |
 | Backend e2e | 75/75 |
-| Frontend Vitest | 69/69 |
-| Frontend Playwright | specs em `tests/home-watch.e2e-spec.ts`, `tests/studio-navigation.e2e-spec.ts` |
+| Frontend Vitest | 71/71 |
+| Frontend Playwright | 13/13 |
 
-## Pendências conhecidas (fora do escopo imediato)
+## Infra e scripts adicionais
 
-- Retomada de upload multipart após falha de rede (upload de até 10GB)
-- Deploy multi-stage em produção (ver `docs/deploy.md`)
+- `compose.full.yaml` — stack local integrada (frontend + API + worker)
+- `compose.prod.yaml` — imagens de produção (Next standalone + Nest build)
+- `scripts/run-e2e.sh` — E2E com MSW (instala browser se necessário)
+- `scripts/start-e2e-dev.sh` — sobe dev server com MSW para E2E
+- `scripts/smoke-full-stack.sh` — smoke test com API real
+
+## Retomada de upload
+
+O formulário de upload do studio persiste o progresso multipart em `localStorage` e permite retomar ao selecionar o mesmo arquivo após falha de rede.
+
+## Pendências conhecidas (baixa prioridade)
+
 - Dívida de lint legada no backend (~151 avisos em specs de auth)

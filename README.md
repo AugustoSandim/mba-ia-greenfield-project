@@ -92,12 +92,11 @@ cd next-frontend
 
 docker compose up -d
 docker compose exec next-frontend npm install        # apenas na primeira vez
-docker compose exec -d next-frontend npm run dev
 ```
 
-A aplicação ficará disponível em **http://localhost:3001**.
+A aplicação ficará disponível em **http://localhost:3001** (dev server com MSW sobe automaticamente).
 
-> As stacks são separadas, então o frontend acessa o backend via `host.docker.internal:3000` (configurado em `next-frontend/.env.local` e no `extra_hosts` do compose).
+> Stack integrada (frontend → API real): `docker compose -f compose.full.yaml up -d` + `bash scripts/smoke-full-stack.sh`
 
 ## 🧪 Testes
 
@@ -117,7 +116,18 @@ Sufixos: `*.spec.ts` (unitário), `*.integration-spec.ts` (integração com banc
 ```bash
 cd next-frontend
 docker compose exec next-frontend npm test            # unitários + integração (Vitest + MSW)
-npx playwright test                                   # end-to-end (no host, com dev server em MSW_ENABLED=true)
+
+# Instalar browsers do Playwright (no host; necessário na primeira vez)
+NODE_TLS_REJECT_UNAUTHORIZED=0 npx playwright install chromium
+
+# E2E (recomendado — sobe dev server + instala browser se faltar + roda testes):
+bash scripts/run-e2e.sh
+
+# Manual: dev server sobe automaticamente no container (MSW habilitado)
+cd next-frontend
+docker compose up -d
+bash ../scripts/start-e2e-dev.sh   # apenas aguarda /login ficar pronto
+npx playwright test
 ```
 
 Sufixos: `*.test.ts(x)` (unitário), `*.integration.test.ts(x)` (Route Handlers com MSW), `*.e2e-spec.ts` (Playwright). MSW intercepta as chamadas à API NestJS — os testes nunca batem no backend real.
@@ -203,8 +213,12 @@ green-field-ia-project/
 │   ├── lib/                             # env, api (openapi-fetch), auth/session
 │   ├── mocks/                           # MSW (handlers + server)
 │   ├── tests/                           # E2E (Playwright)
-│   ├── compose.yaml                     # Docker Compose (dev server)
+│   ├── compose.yaml                     # Docker Compose (dev + MSW automático)
+│   ├── Dockerfile                       # Imagem de produção (standalone)
 │   └── Dockerfile.dev
+├── compose.full.yaml                    # Stack local integrada (frontend + API)
+├── compose.prod.yaml                    # Produção (imagens buildadas)
+├── scripts/                             # run-e2e, start-e2e-dev, smoke-full-stack
 ├── CLAUDE.md                            # Instruções para IA
 ├── FC Tube.fig                          # Design system do projeto (Figma)
 ├── whiteboard.png                       # Quadro branco do projeto
