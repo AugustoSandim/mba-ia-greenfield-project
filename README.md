@@ -45,9 +45,9 @@ O projeto é um monorepo baseado em containers Docker. Cada subprojeto sobe sua 
 - **API** (NestJS 11) — regras de negócio, autenticação (JWT + refresh token rotation), envio de e-mails e acesso ao banco.
 - **Database** (PostgreSQL 17) — usuários, canais e tokens de autenticação.
 - **Email Service** (Mailpit) — captura os e-mails transacionais (confirmação de conta e recuperação de senha) em uma UI local.
-- **Video Worker** (FFmpeg) — processamento de vídeos *(planejado — Fase 03)*.
-- **Object Storage** (S3/MinIO) — arquivos de vídeo e thumbnails *(planejado — Fase 03)*.
-- **Message Queue** — fila de processamento de vídeos *(planejado — Fase 03)*.
+- **Video Worker** (FFmpeg) — processamento de vídeos em background.
+- **Object Storage** (S3/MinIO) — arquivos de vídeo e thumbnails.
+- **Message Queue** (Redis + BullMQ) — fila de processamento de vídeos.
 
 O diagrama de arquitetura completo (C4) está em `docs/diagrams/software-arch.mermaid`.
 
@@ -124,7 +124,7 @@ Sufixos: `*.test.ts(x)` (unitário), `*.integration.test.ts(x)` (Route Handlers 
 
 ## ✅ Funcionalidades implementadas
 
-**Fase 01 — Configuração base** e **Fase 02 — Autenticação** estão concluídas (backend + frontend).
+**Fases 01–07 concluídas** (backend + frontend). Detalhes em `docs/phases/` e `docs/project-plan.md`.
 
 ### Autenticação (Fase 02)
 
@@ -150,6 +150,28 @@ Telas e Route Handlers BFF (`next-frontend`):
 - `app/api/auth/{signup,login,logout,forgot-password}` — proxy same-origin para a API.
 
 Segurança: senhas com **Argon2**, **JWT** com `JwtAuthGuard` global (opt-out via `@Public()`), **rotação de refresh token** com detecção de reuso, **rate limiting** (`ThrottlerGuard`) nos endpoints de auth, e sessão no navegador via **iron-session** (cookies HTTP-only).
+
+### Vídeos, canal e studio (Fases 03–04)
+
+- Upload multipart via presigned URLs (MinIO), worker FFmpeg, streaming e download
+- Categorias, rascunho → publicação, visibilidade `public`/`unlisted`
+- Studio: `/studio/videos`, upload, edição, canal e inscrições
+- Canal público: `/c/[nickname]`
+
+### Watch e social (Fases 05–06)
+
+- Página de watch: `/watch/[publicId]` com player, sugestões e download
+- Likes/dislikes, comentários com respostas, inscrição em canais
+
+### Home e busca (Fase 07)
+
+- Home com grid, filtro por categoria e paginação (`/`)
+- Busca dedicada (`/search?q=`)
+- Navbar com busca, login/avatar e navegação
+
+Contrato OpenAPI: `nestjs-project/openapi.json` (export) → `next-frontend/openapi.json` via `scripts/sync-openapi.sh`.
+
+Deploy: ver [docs/deploy.md](docs/deploy.md).
 
 ## 🛠️ Estrutura do Projeto
 
@@ -195,11 +217,11 @@ green-field-ia-project/
 |------|-----------|--------|
 | **01** | Configuração Base do Projeto | ✅ Concluída |
 | **02** | Cadastro, Login e Gerenciamento de Conta | ✅ Concluída |
-| **03** | Upload e Processamento de Vídeos | ⏳ Planejada |
-| **04** | Gerenciamento de Vídeos e Canal | ⏳ Planejada |
-| **05** | Página de Visualização do Vídeo | ⏳ Planejada |
-| **06** | Interações Sociais (Likes, Comentários, Inscrições) | ⏳ Planejada |
-| **07** | Página Inicial, Busca e Finalização | ⏳ Planejada |
+| **03** | Upload e Processamento de Vídeos | ✅ Concluída |
+| **04** | Gerenciamento de Vídeos e Canal | ✅ Concluída |
+| **05** | Página de Visualização do Vídeo | ✅ Concluída |
+| **06** | Interações Sociais (Likes, Comentários, Inscrições) | ✅ Concluída |
+| **07** | Página Inicial, Busca e Finalização | ✅ Concluída |
 
 Detalhes completos em `docs/project-plan.md`.
 

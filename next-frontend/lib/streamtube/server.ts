@@ -14,6 +14,7 @@ import {
   normalizeSubscriptions,
   normalizeVideoDetail,
   normalizeVideoList,
+  unwrapCollection,
   type Category,
   type ChannelSummary,
   type CommentItem,
@@ -122,7 +123,7 @@ export async function getRelatedVideos(publicId: string): Promise<VideoSummary[]
 
 export async function getVideoComments(publicId: string): Promise<CommentItem[]> {
   const data = await fetchApi(`/videos/${publicId}/comments`);
-  return normalizeCommentList(data);
+  return normalizeCommentList(unwrapCollection(data));
 }
 
 export async function getPublicChannel(nickname: string): Promise<{
@@ -145,7 +146,7 @@ export async function getMyChannel(): Promise<ChannelSummary> {
 
 export async function getMyVideos(): Promise<VideoSummary[]> {
   const data = await fetchApi("/channels/me/videos", { auth: true });
-  return normalizeVideoList(data);
+  return normalizeVideoList(unwrapCollection(data));
 }
 
 export async function getSubscriptions(): Promise<ChannelSummary[]> {

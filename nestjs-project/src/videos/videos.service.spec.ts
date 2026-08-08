@@ -5,7 +5,9 @@ import { Repository } from 'typeorm';
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/unbound-method, @typescript-eslint/require-await */
 import { ChannelsService } from '../channels/channels.service';
 import { CategoriesService } from '../categories/categories.service';
+import { CommentsService } from '../comments/comments.service';
 import { ChannelNotFoundException } from '../common/exceptions/domain.exception';
+import { LikesService } from '../likes/likes.service';
 import { QueueService } from '../queue/queue.service';
 import { StorageService } from '../storage/storage.service';
 import { CompleteUploadDto } from './dto/complete-upload.dto';
@@ -70,6 +72,8 @@ describe('VideosService', () => {
   let queueService: jest.Mocked<QueueService>;
   let channelsService: jest.Mocked<ChannelsService>;
   let categoriesService: jest.Mocked<CategoriesService>;
+  let likesService: jest.Mocked<LikesService>;
+  let commentsService: jest.Mocked<CommentsService>;
 
   beforeEach(async () => {
     videoRepository = {
@@ -105,6 +109,13 @@ describe('VideosService', () => {
       findAll: jest.fn().mockResolvedValue([]),
       findBySlug: jest.fn().mockResolvedValue(null),
     } as unknown as jest.Mocked<CategoriesService>;
+    likesService = {
+      getVideoLikeCounts: jest.fn().mockResolvedValue({ likes: 0, dislikes: 0 }),
+      getUserVideoReaction: jest.fn().mockResolvedValue('none'),
+    } as unknown as jest.Mocked<LikesService>;
+    commentsService = {
+      countByVideo: jest.fn().mockResolvedValue(0),
+    } as unknown as jest.Mocked<CommentsService>;
 
     const module = await Test.createTestingModule({
       providers: [
@@ -114,6 +125,8 @@ describe('VideosService', () => {
         { provide: QueueService, useValue: queueService },
         { provide: ChannelsService, useValue: channelsService },
         { provide: CategoriesService, useValue: categoriesService },
+        { provide: LikesService, useValue: likesService },
+        { provide: CommentsService, useValue: commentsService },
       ],
     }).compile();
 

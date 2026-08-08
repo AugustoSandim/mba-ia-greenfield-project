@@ -30,8 +30,8 @@ export class CommentsController {
   @ApiOperation({ summary: 'List comments for a video' })
   async list(@Param('publicId') publicId: string) {
     const video = await this.videosService.getVideoForPublicAccess(publicId);
-    const comments = await this.commentsService.listByVideo(video.id);
-    return { items: comments };
+    const items = await this.commentsService.listByVideoEnriched(video.id);
+    return { items };
   }
 
   @Post('videos/:publicId/comments')
@@ -43,7 +43,7 @@ export class CommentsController {
     @Body() dto: CreateCommentDto,
   ) {
     const video = await this.videosService.getVideoForPublicAccess(publicId);
-    return this.commentsService.create(video.id, user.sub, dto);
+    return this.commentsService.createEnriched(video.id, user.sub, dto);
   }
 
   @Post('comments/:commentId/replies')
@@ -55,7 +55,7 @@ export class CommentsController {
     @Body() dto: CreateCommentDto,
   ) {
     const parent = await this.commentsService.findById(commentId);
-    return this.commentsService.create(
+    return this.commentsService.createEnriched(
       parent.videoId,
       user.sub,
       dto,

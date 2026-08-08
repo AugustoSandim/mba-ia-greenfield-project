@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'crypto';
 import type { Response } from 'express';
@@ -7,6 +7,8 @@ import { CategoriesService } from '../categories/categories.service';
 import { ChannelsService } from '../channels/channels.service';
 import { VideoNotReadyForPublishException } from '../channels/exceptions/channel.exceptions';
 import { ChannelNotFoundException } from '../common/exceptions/domain.exception';
+import { CommentsService } from '../comments/comments.service';
+import { LikesService } from '../likes/likes.service';
 import { QueueService } from '../queue/queue.service';
 import { StorageService } from '../storage/storage.service';
 import { CompleteUploadDto } from './dto/complete-upload.dto';
@@ -36,6 +38,10 @@ export class VideosService {
     private readonly queueService: QueueService,
     private readonly channelsService: ChannelsService,
     private readonly categoriesService: CategoriesService,
+    @Inject(forwardRef(() => LikesService))
+    private readonly likesService: LikesService,
+    @Inject(forwardRef(() => CommentsService))
+    private readonly commentsService: CommentsService,
   ) {}
 
   private async resolveOwnerChannelId(
@@ -75,10 +81,24 @@ export class VideosService {
     return video;
   }
 
-  private async toResponseDto(video: Video): Promise<VideoResponseDto> {
+  private async toResponseDto(
+    video: Video,
+    userId?: string,
+  ): Promise<VideoResponseDto> {
     const thumbnailUrl = video.thumbnailKey
       ? await this.storageService.getPresignedGetUrl(video.thumbnailKey, 3600)
       : null;
+    const [{ likes, dislikes }, commentsCount, viewerReaction] =
+      await Promise.all([
+        this.likesService.getVideoLikeCounts(video.id),
+        this.commentsService.countByVideo(video.id),
+        this.likesService.getUserVideoReaction(userId, video.id),
+      ]);
+
+    const category = video.categoryId
+      ? await this.categoriesService.findById(video.categoryId)
+      : null;
+
     return {
       id: video.id,
       publicId: video.publicId,
@@ -94,7 +114,28 @@ export class VideosService {
       thumbnailUrl,
       createdAt: video.createdAt,
       updatedAt: video.updatedAt,
+      likesCount: likes,
+      dislikesCount: dislikes,
+      commentsCount,
+      viewerReaction,
+      channel: video.channel
+        ? {
+            id: video.channel.id,
+            name: video.channel.name,
+            nickname: video.channel.nickname,
+          }
+        : undefined,
+      category: category
+        ? { id: category.id, name: category.name, slug: category.slug }
+        : null,
     };
+  }
+
+  async mapVideosToResponse(
+    videos: Video[],
+    userId?: string,
+  ): Promise<VideoResponseDto[]> {
+    return Promise.all(videos.map((video) => this.toResponseDto(video, userId)));
   }
 
   private async generateUniquePublicId(maxRetries = 5): Promise<string> {
@@ -271,7 +312,7 @@ export class VideosService {
       throw new VideoNotFoundException();
     }
 
-    return this.toResponseDto(video);
+    return this.toResponseDto(video, userId);
   }
 
   async listFeed(query: VideoFeedQueryDto): Promise<{
@@ -285,6 +326,7 @@ export class VideosService {
     const qb = this.videoRepository
       .createQueryBuilder('video')
       .leftJoinAndSelect('video.channel', 'channel')
+      .leftJoinAndSelect('video.category', 'category')
       .where('video.status = :status', { status: VideoStatus.READY })
       .andWhere('video.published_at IS NOT NULL')
       .andWhere('video.visibility = :visibility', {
@@ -319,9 +361,6 @@ export class VideosService {
     dto: UpdateVideoDto,
   ): Promise<VideoResponseDto> {
     const video = await this.getOwnedVideo(videoId, userId);
-    if (video.status !== VideoStatus.READY) {
-      throw new VideoNotReadyForPublishException();
-    }
     if (dto.categoryId !== undefined && dto.categoryId !== null) {
       const category = await this.categoriesService.findById(dto.categoryId);
       if (!category) {
@@ -335,7 +374,7 @@ export class VideosService {
       ...(dto.visibility !== undefined && { visibility: dto.visibility }),
     });
     const saved = await this.videoRepository.save(video);
-    return this.toResponseDto(saved);
+    return this.toResponseDto(saved, userId);
   }
 
   async publishVideo(
@@ -348,7 +387,7 @@ export class VideosService {
     }
     video.publishedAt = new Date();
     const saved = await this.videoRepository.save(video);
-    return this.toResponseDto(saved);
+    return this.toResponseDto(saved, userId);
   }
 
   async unpublishVideo(
@@ -358,7 +397,7 @@ export class VideosService {
     const video = await this.getOwnedVideo(videoId, userId);
     video.publishedAt = null;
     const saved = await this.videoRepository.save(video);
-    return this.toResponseDto(saved);
+    return this.toResponseDto(saved, userId);
   }
 
   async presignThumbnail(

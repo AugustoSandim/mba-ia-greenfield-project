@@ -1,4 +1,49 @@
 import { DataSource, EntitySchema, MigrationInterface } from 'typeorm';
+import { BullModule } from '@nestjs/bullmq';
+import { ConfigModule, ConfigType } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Category } from '../categories/entities/category.entity';
+import queueConfig from '../config/queue.config';
+import storageConfig from '../config/storage.config';
+import { Comment } from '../comments/entities/comment.entity';
+import { RefreshToken } from '../auth/entities/refresh-token.entity';
+import { VerificationToken } from '../auth/entities/verification-token.entity';
+import { Channel } from '../channels/entities/channel.entity';
+import { CommentLike } from '../likes/entities/comment-like.entity';
+import { VideoLike } from '../likes/entities/video-like.entity';
+import { Subscription } from '../subscriptions/entities/subscription.entity';
+import { User } from '../users/entities/user.entity';
+import { Video } from '../videos/entities/video.entity';
+
+export const FULL_APP_ENTITIES = [
+  User,
+  Channel,
+  RefreshToken,
+  VerificationToken,
+  Category,
+  Video,
+  Comment,
+  VideoLike,
+  CommentLike,
+  Subscription,
+];
+
+export function createSocialModuleSpecImports() {
+  return [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [queueConfig, storageConfig],
+    }),
+    TypeOrmModule.forRoot(createTestDataSource(FULL_APP_ENTITIES).options),
+    BullModule.forRootAsync({
+      inject: [queueConfig.KEY],
+      useFactory: (cfg: ConfigType<typeof queueConfig>) => ({
+        connection: { host: cfg.host, port: cfg.port },
+      }),
+    }),
+  ];
+}
+
 
 interface TestDataSourceOptions {
   synchronize?: boolean;

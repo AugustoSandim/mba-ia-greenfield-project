@@ -15,9 +15,10 @@ import type { JwtPayload } from '../auth/auth.types';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import { PaginationQueryDto } from '../videos/dto/video-feed-query.dto';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
+import { VideosService } from '../videos/videos.service';
 import { ChannelsService } from './channels.service';
 import { UpdateChannelDto } from './dto/update-channel.dto';
-import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 
 @ApiTags('channels')
 @Controller('channels')
@@ -25,6 +26,7 @@ export class ChannelsController {
   constructor(
     private readonly channelsService: ChannelsService,
     private readonly subscriptionsService: SubscriptionsService,
+    private readonly videosService: VideosService,
   ) {}
 
   @Get('me')
@@ -58,7 +60,17 @@ export class ChannelsController {
     const channel = await this.channelsService.findChannelByUserId(user.sub);
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
-    return this.channelsService.listOwnerVideos(channel.id, page, limit);
+    const { items, total } = await this.channelsService.listOwnerVideos(
+      channel.id,
+      page,
+      limit,
+    );
+    return {
+      items: await this.videosService.mapVideosToResponse(items, user.sub),
+      total,
+      page,
+      limit,
+    };
   }
 
   @Get('me/subscriptions')
@@ -78,13 +90,19 @@ export class ChannelsController {
     const channel = await this.channelsService.findByNickname(nickname);
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
-    const [subscriberCount, videos] = await Promise.all([
+    const [subscriberCount, videosResult] = await Promise.all([
       this.channelsService.getSubscriberCount(channel.id),
       this.channelsService.listPublicVideos(channel.id, page, limit),
     ]);
+    const videos = await this.videosService.mapVideosToResponse(
+      videosResult.items,
+    );
     return {
       channel: { ...channel, subscriberCount },
       videos,
+      total: videosResult.total,
+      page,
+      limit,
     };
   }
 

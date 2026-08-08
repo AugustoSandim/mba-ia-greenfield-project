@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -40,12 +41,27 @@ export default async function StudioVideosPage() {
           {videos.map((video) => (
             <Card key={video.id} className="py-0">
               <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <CardTitle>{video.title}</CardTitle>
-                  <p className="mt-2 text-body-md text-muted-foreground">
-                    {video.status} · {video.visibility} · {formatViews(video.viewsCount)} views ·{" "}
-                    {formatPublishedAt(video.publishedAt)}
-                  </p>
+                <div className="flex min-w-0 flex-1 gap-4">
+                  <div className="relative h-20 w-36 shrink-0 overflow-hidden rounded-[var(--radius-3)] bg-muted">
+                    {video.thumbnailUrl ? (
+                      <Image
+                        src={video.thumbnailUrl}
+                        alt=""
+                        fill
+                        className="object-cover"
+                        sizes="144px"
+                        unoptimized
+                      />
+                    ) : null}
+                  </div>
+                  <div className="min-w-0">
+                    <CardTitle>{video.title}</CardTitle>
+                    <p className="mt-2 text-body-md text-muted-foreground">
+                      {video.status} · {video.visibility} · {formatViews(video.viewsCount)} views ·{" "}
+                      {video.likesCount} likes · {video.commentsCount} comments ·{" "}
+                      {formatPublishedAt(video.publishedAt)}
+                    </p>
+                  </div>
                 </div>
                 <Button asChild variant="outline" size="sm">
                   <Link href={`/studio/videos/${video.id}/edit`}>Edit video</Link>

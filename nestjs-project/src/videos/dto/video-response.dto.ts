@@ -44,4 +44,30 @@ export class VideoResponseDto {
 
   @ApiProperty()
   updatedAt: Date;
+
+  @ApiPropertyOptional()
+  likesCount?: number;
+
+  @ApiPropertyOptional()
+  dislikesCount?: number;
+
+  @ApiPropertyOptional()
+  commentsCount?: number;
+
+  @ApiPropertyOptional({ enum: ['like', 'dislike', 'none'] })
+  viewerReaction?: 'like' | 'dislike' | 'none';
+
+  @ApiPropertyOptional()
+  channel?: {
+    id: string;
+    name: string;
+    nickname: string;
+  };
+
+  @ApiPropertyOptional({ nullable: true })
+  category?: {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
 }

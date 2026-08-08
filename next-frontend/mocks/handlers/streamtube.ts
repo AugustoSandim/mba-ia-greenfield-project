@@ -339,10 +339,15 @@ export const handlers = [
 
   http.post(`${env.API_URL}/videos/:publicId/comments`, async ({ params, request }) => {
     const publicId = String(params.publicId);
-    const body = (await request.json()) as { content?: string; parentId?: string | null };
+    const body = (await request.json()) as {
+      content?: string;
+      body?: string;
+      parentId?: string | null;
+    };
+    const text = body.content?.trim() || body.body?.trim() || "";
     const nextComment: Comment = {
       id: `comment-${Date.now()}`,
-      content: body.content?.trim() || "",
+      content: text,
       createdAt: now,
       likesCount: 0,
       dislikesCount: 0,
@@ -373,15 +378,43 @@ export const handlers = [
     return HttpResponse.json(nextComment, { status: 201 });
   }),
 
-  http.post(`${env.API_URL}/videos/:publicId/likes`, async ({ params, request }) => {
+  http.post(`${env.API_URL}/comments/:commentId/replies`, async ({ request }) => {
+    const body = (await request.json()) as { content?: string; body?: string };
+    const text = body.content?.trim() || body.body?.trim() || "";
+    return HttpResponse.json(
+      {
+        id: `reply-${Date.now()}`,
+        content: text,
+        createdAt: now,
+        likesCount: 0,
+        dislikesCount: 0,
+        viewerReaction: "none",
+        author: {
+          id: "user-fixture-id",
+          name: "Alice",
+          nickname: "augusto",
+          avatarUrl: null,
+        },
+        replies: [],
+      },
+      { status: 201 }
+    );
+  }),
+
+  http.post(`${env.API_URL}/videos/:publicId/like`, async ({ params, request }) => {
     const video = getVideoByPublicId(String(params.publicId));
     if (!video) {
       return HttpResponse.json({ message: "Video not found" }, { status: 404 });
     }
 
-    const body = (await request.json()) as { value?: "like" | "dislike" | "none" };
+    const body = (await request.json()) as { value?: 1 | -1 | "like" | "dislike" | "none" };
     const previous = video.viewerReaction;
-    const next = body.value ?? "none";
+    const next =
+      body.value === 1 || body.value === "like"
+        ? "like"
+        : body.value === -1 || body.value === "dislike"
+          ? "dislike"
+          : "none";
 
     if (previous === "like") {
       video.likesCount -= 1;
@@ -451,12 +484,12 @@ export const handlers = [
     });
   }),
 
-  http.post(`${env.API_URL}/channels/:nickname/subscription`, ({ params }) => {
+  http.post(`${env.API_URL}/channels/:nickname/subscribe`, ({ params }) => {
     subscriptions.add(String(params.nickname));
     return new HttpResponse(null, { status: 204 });
   }),
 
-  http.delete(`${env.API_URL}/channels/:nickname/subscription`, ({ params }) => {
+  http.delete(`${env.API_URL}/channels/:nickname/subscribe`, ({ params }) => {
     subscriptions.delete(String(params.nickname));
     return new HttpResponse(null, { status: 204 });
   }),

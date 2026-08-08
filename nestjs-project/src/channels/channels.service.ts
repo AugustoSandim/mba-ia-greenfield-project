@@ -137,6 +137,7 @@ export class ChannelsService {
         visibility: VideoVisibility.PUBLIC,
         publishedAt: Not(IsNull()),
       },
+      relations: ['channel', 'category'],
       order: { publishedAt: 'DESC' },
       skip: (page - 1) * limit,
       take: limit,
@@ -152,6 +153,7 @@ export class ChannelsService {
     const repo = this.dataSource.getRepository(Video);
     const [items, total] = await repo.findAndCount({
       where: { channelId },
+      relations: ['channel', 'category'],
       order: { createdAt: 'DESC' },
       skip: (page - 1) * limit,
       take: limit,

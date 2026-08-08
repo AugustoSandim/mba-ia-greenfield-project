@@ -5,7 +5,7 @@ export async function POST(
   context: { params: Promise<{ nickname: string }> }
 ) {
   const { nickname } = await context.params;
-  const response = await proxyUpstream(`/channels/${nickname}/subscription`, {
+  const response = await proxyUpstream(`/channels/${nickname}/subscribe`, {
     method: "POST",
     auth: true,
   });
@@ -18,7 +18,7 @@ export async function DELETE(
   context: { params: Promise<{ nickname: string }> }
 ) {
   const { nickname } = await context.params;
-  const response = await proxyUpstream(`/channels/${nickname}/subscription`, {
+  const response = await proxyUpstream(`/channels/${nickname}/subscribe`, {
     method: "DELETE",
     auth: true,
   });

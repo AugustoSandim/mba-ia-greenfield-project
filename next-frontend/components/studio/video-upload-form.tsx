@@ -133,7 +133,7 @@ export function VideoUploadForm({ categories }: VideoUploadFormProps) {
           title,
           description,
           categoryId,
-          visibility: "private",
+          visibility: "unlisted",
         }),
       });
 

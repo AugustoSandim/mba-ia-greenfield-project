@@ -27,6 +27,22 @@ export class LikesService {
     await this.videoLikeRepository.delete({ userId, videoId });
   }
 
+  async getUserVideoReaction(
+    userId: string | undefined,
+    videoId: string,
+  ): Promise<'like' | 'dislike' | 'none'> {
+    if (!userId) {
+      return 'none';
+    }
+    const row = await this.videoLikeRepository.findOne({
+      where: { userId, videoId },
+    });
+    if (!row) {
+      return 'none';
+    }
+    return row.value > 0 ? 'like' : 'dislike';
+  }
+
   async getVideoLikeCounts(
     videoId: string,
   ): Promise<{ likes: number; dislikes: number }> {
