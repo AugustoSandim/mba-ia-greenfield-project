@@ -22,7 +22,7 @@ import { User } from '../users/entities/user.entity';
 import { UsersModule } from '../users/users.module';
 import {
   cleanAllTables,
-  createTestDataSource,
+  createSocialModuleSpecImports,
 } from '../test/create-test-data-source';
 import { clearMailpitMessages } from '../test/mailpit';
 import { AuthService } from './auth.service';
@@ -32,17 +32,14 @@ import {
   VerificationTokenType,
 } from './entities/verification-token.entity';
 
-const ALL_ENTITIES = [User, Channel, RefreshToken, VerificationToken];
-
 async function createAuthTestModule(): Promise<TestingModule> {
-  const ds = createTestDataSource(ALL_ENTITIES);
   return Test.createTestingModule({
     imports: [
       ConfigModule.forRoot({
         isGlobal: true,
         load: [appConfig, authConfig, mailConfig],
       }),
-      TypeOrmModule.forRoot(ds.options),
+      ...createSocialModuleSpecImports(),
       TypeOrmModule.forFeature([
         User,
         Channel,
@@ -231,7 +228,7 @@ describe('AuthService — confirm (integration)', () => {
 
   it('throws TokenExpiredException for an expired token', async () => {
     const capturePromise = captureConfirmationToken(authService);
-    const { id: userId } = await authService.register({
+    await authService.register({
       email: 'expired@example.com',
       password: 'password123',
     });

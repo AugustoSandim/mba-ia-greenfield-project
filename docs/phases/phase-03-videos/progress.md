@@ -88,7 +88,7 @@
 - ✅ All Phase 03 tests pass (unit + integration: 190 tests, 1 pre-existing migration failure unrelated to Phase 03; e2e: 75/75)
 - ✅ TypeScript compiles cleanly: `npx tsc --noEmit` exits 0
 - ✅ `npm run test:e2e --runInBand --forceExit`: 75/75 pass
-- ⚠️ `npm run lint`: 150 pre-existing errors in unmodified files (auth specs, channels.service utility function, storage spec, etc.). Phase 03 new files have **0 lint errors** (13 warnings on `no-unsafe-argument` which is configured as `warn` in ESLint config).
+- ✅ `npm run lint`: 0 errors (warnings only in test mocks)
 
 ## Notable Changes Beyond SI Scope
 
